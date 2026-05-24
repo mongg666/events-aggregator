@@ -1,0 +1,26 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: events
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://user:postgres@db:5432/events
+      EVENTS_PROVIDER_BASE_URL: http://events-provider.dev-2.python-labs.ru
+      EVENTS_PROVIDER_API_KEY: ${API_KEY}
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
