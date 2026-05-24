@@ -54,7 +54,11 @@ class EventRepository:
         self.session = session
 
     async def get_by_id(self, event_id: uuid.UUID) -> Optional[Event]:
-        result = await self.session.execute(select(Event).where(Event.id == event_id))
+        result = await self.session.execute(
+            select(Event)
+            .options(selectinload(Event.place))
+            .where(Event.id == event_id)
+        )
         return result.scalar_one_or_none()
 
     async def list_events(
@@ -63,7 +67,7 @@ class EventRepository:
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[List[Event], int]:
-        query = select(Event)
+        query = select(Event).options(selectinload(Event.place))
         if date_from:
             query = query.where(Event.event_time >= date_from)
         count_query = select(func.count()).select_from(query.subquery())
