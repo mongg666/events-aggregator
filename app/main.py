@@ -3,6 +3,8 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from app.database import Base, engine
 from app.routers import events, health, sync, tickets
@@ -14,10 +16,8 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Создаём таблицы при старте (для простоты; в продакшене используем миграции)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    # Запускаем фоновую синхронизацию
     task = asyncio.create_task(periodic_sync())
     logger.info("Application started")
     yield
@@ -26,6 +26,10 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Events Aggregator", lifespan=lifespan)
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    return JSONResponse(status_code=400, content={"detail": exc.errors()})
 
 app.include_router(health.router, tags=["health"])
 app.include_router(events.router, prefix="/api", tags=["events"])
