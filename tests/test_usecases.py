@@ -1,9 +1,12 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock
+from datetime import datetime, timedelta, timezone
+from unittest.mock import AsyncMock
 from uuid import uuid4
-from datetime import datetime, timezone, timedelta
-from app.usecases import CreateTicketUsecase, EventNotFound, EventNotPublished
-from app.models import Event, Place
+
+import pytest
+
+from app.models import Event
+from app.usecases import CreateTicketUsecase, EventNotPublished
+
 
 @pytest.mark.asyncio
 async def test_create_ticket_success():
@@ -12,7 +15,9 @@ async def test_create_ticket_success():
     event_repo = AsyncMock()
     ticket_repo = AsyncMock()
     event = Event(
-        id=uuid4(), name="Test", status="published",
+        id=uuid4(),
+        name="Test",
+        status="published",
         registration_deadline=datetime.now(timezone.utc) + timedelta(days=1),
         event_time=datetime.now(timezone.utc) + timedelta(days=2),
         changed_at=datetime.now(timezone.utc),
@@ -26,12 +31,16 @@ async def test_create_ticket_success():
     client.register.assert_awaited_once()
     ticket_repo.create.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_create_ticket_event_not_published():
     client = AsyncMock()
     event_repo = AsyncMock()
     ticket_repo = AsyncMock()
-    event = Event(status="new", registration_deadline=datetime.now(timezone.utc)+timedelta(1))
+    event = Event(
+        status="new",
+        registration_deadline=datetime.now(timezone.utc) + timedelta(1),
+    )
     event_repo.get_by_id.return_value = event
     usecase = CreateTicketUsecase(client, event_repo, ticket_repo)
     with pytest.raises(EventNotPublished):

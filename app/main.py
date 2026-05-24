@@ -1,15 +1,16 @@
 import asyncio
 import logging
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
-from app.config import settings
-from app.database import engine, Base
+from app.database import Base, engine
+from app.routers import events, health, sync, tickets
 from app.tasks import periodic_sync
-from app.routers import health, events, tickets, sync
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -22,6 +23,7 @@ async def lifespan(app: FastAPI):
     yield
     task.cancel()
     await engine.dispose()
+
 
 app = FastAPI(title="Events Aggregator", lifespan=lifespan)
 

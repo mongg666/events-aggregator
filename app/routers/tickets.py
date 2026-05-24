@@ -1,18 +1,22 @@
 import uuid
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_session
 from app.clients import EventsProviderClient
-from app.repositories import EventRepository, TicketRepository
-from app.usecases import CreateTicketUsecase, CancelTicketUsecase
-from app.schemas import TicketCreate, TicketResponse, SuccessResponse
+from app.database import get_session
 from app.exceptions import EventNotFound, EventNotPublished
+from app.repositories import EventRepository, TicketRepository
+from app.schemas import SuccessResponse, TicketCreate, TicketResponse
+from app.usecases import CancelTicketUsecase, CreateTicketUsecase
 
 router = APIRouter()
 
+
 @router.post("/tickets", response_model=TicketResponse, status_code=201)
-async def register_ticket(body: TicketCreate, session: AsyncSession = Depends(get_session)):
+async def register_ticket(
+    body: TicketCreate, session: AsyncSession = Depends(get_session)
+):
     client = EventsProviderClient()
     try:
         event_repo = EventRepository(session)
@@ -39,8 +43,11 @@ async def register_ticket(body: TicketCreate, session: AsyncSession = Depends(ge
     finally:
         await client.close()
 
+
 @router.delete("/tickets/{ticket_id}", response_model=SuccessResponse)
-async def cancel_ticket(ticket_id: uuid.UUID, session: AsyncSession = Depends(get_session)):
+async def cancel_ticket(
+    ticket_id: uuid.UUID, session: AsyncSession = Depends(get_session)
+):
     client = EventsProviderClient()
     try:
         event_repo = EventRepository(session)

@@ -1,14 +1,14 @@
 import asyncio
 import logging
-from datetime import date
 
+from app.clients import EventsProviderClient
 from app.config import settings
 from app.database import async_session_factory
-from app.clients import EventsProviderClient
 from app.repositories import EventRepository, SyncRepository
 from app.usecases import SyncEventsUsecase
 
 logger = logging.getLogger(__name__)
+
 
 async def run_sync():
     logger.info("Background sync triggered")
@@ -24,6 +24,7 @@ async def run_sync():
         logger.error("Sync failed: %s", e)
     finally:
         await client.close()
+
 
 async def periodic_sync(interval: int = settings.sync_interval_seconds):
     while True:

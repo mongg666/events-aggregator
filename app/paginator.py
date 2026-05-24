@@ -1,6 +1,9 @@
-from datetime import date, datetime
+from datetime import date
 from typing import AsyncIterator, Optional
+from urllib.parse import parse_qs, urlparse
+
 from app.clients import EventsProviderClient
+
 
 class EventsPaginator:
     def __init__(self, client: EventsProviderClient, changed_at: date = date(2000, 1, 1)):
@@ -18,7 +21,6 @@ class EventsPaginator:
             if not next_url:
                 break
             # Извлекаем cursor из URL
-            from urllib.parse import urlparse, parse_qs
             parsed = urlparse(next_url)
             params = parse_qs(parsed.query)
             cursor = params.get("cursor", [None])[0]

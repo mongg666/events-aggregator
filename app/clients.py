@@ -1,11 +1,17 @@
 from datetime import date
-from typing import Optional, Dict, Any, List
+from typing import Dict, List, Optional
+
 import httpx
+
 from app.config import settings
 
+
 class EventsProviderClient:
-    def __init__(self, base_url: str = settings.events_provider_base_url,
-                 api_key: str = settings.events_provider_api_key):
+    def __init__(
+        self,
+        base_url: str = settings.events_provider_base_url,
+        api_key: str = settings.events_provider_api_key,
+    ):
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self._client: Optional[httpx.AsyncClient] = None
@@ -15,17 +21,17 @@ class EventsProviderClient:
             self._client = httpx.AsyncClient(headers={"x-api-key": self.api_key})
         return self._client
 
-    async def list_events(self, changed_at: date, cursor: Optional[str] = None) -> Dict[str, Any]:
+    async def list_events(
+        self, changed_at: date, cursor: Optional[str] = None
+    ) -> Dict[str, object]:
         client = await self._get_client()
-        url = f"{self.base_url}/api/events/"
-        params = {"changed_at": changed_at.isoformat()}
         if cursor:
-            # cursor уже включён в URL, если передан полный URL
-            # Но мы передаём cursor как параметр
             url = f"{self.base_url}/api/events/?changed_at={changed_at.isoformat()}&cursor={cursor}"
+            params = None
         else:
+            url = f"{self.base_url}/api/events/"
             params = {"changed_at": changed_at.isoformat()}
-        response = await client.get(url, params=params if not cursor else None)
+        response = await client.get(url, params=params)
         response.raise_for_status()
         return response.json()
 
@@ -37,8 +43,9 @@ class EventsProviderClient:
         data = response.json()
         return data.get("seats", [])
 
-    async def register(self, event_id: str, first_name: str, last_name: str,
-                       seat: str, email: str) -> str:
+    async def register(
+        self, event_id: str, first_name: str, last_name: str, seat: str, email: str
+    ) -> str:
         client = await self._get_client()
         url = f"{self.base_url}/api/events/{event_id}/register/"
         payload = {
