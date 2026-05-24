@@ -4,15 +4,37 @@ from typing import List, Optional, Protocol
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models import Event, Place, SyncMetadata, Ticket
 
 
 class EventRepositoryProtocol(Protocol):
-    async def get_by_id(self, event_id: uuid.UUID) -> Optional[Event]: ...
+    async def get_by_id(self, event_id: uuid.UUID) -> Optional[Event]:
+        result = await self.session.execute(
+            select(Event).options(selectinload(Event.place)).where(Event.id == event_id)
+        )
+        return result.scalar_one_or_none()
+
     async def list_events(
-        self, date_from: Optional[datetime] = None, page: int = 1, page_size: int = 20
-    ) -> tuple[List[Event], int]: ...
+            self,
+            date_from: Optional[datetime] = None,
+            page: int = 1,
+            page_size: int = 20,
+    ) -> tuple[List[Event], int]:
+        query = select(Event).options(selectinload(Event.place))
+        if date_from:
+            query = query.where(Event.event_time >= date_from)
+        # Подсчёт
+        count_query = select(func.count()).select_from(query.subquery())
+        total = await self.session.scalar(count_query)
+
+        query = query.order_by(Event.event_time).offset(
+            (page - 1) * page_size
+        ).limit(page_size)
+        result = await self.session.execute(query)
+        events = result.scalars().all()
+        return events, total
     async def upsert(self, event: Event) -> Event: ...
 
 
