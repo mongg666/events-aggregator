@@ -1,0 +1,26 @@
+[project]
+name = "events-aggregator"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.23.0",
+    "sqlalchemy[asyncio]>=2.0.20",
+    "asyncpg>=0.28.0",
+    "alembic>=1.11.0",
+    "pydantic-settings>=2.0.0",
+    "httpx>=0.24.0",
+    "python-dateutil>=2.8.2",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = []
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = "tests"
